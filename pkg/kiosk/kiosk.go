@@ -26,11 +26,11 @@ func (s *DataSupplier) Interval(interval int64) simulated.IntervalSupplier {
 }
 
 func (s *DataSupplier) Price() float64 {
-	return s.Interval(candlestick.Interval1m).Candle().Close
+	return s.Interval(s.store.provider.resolution).Candle().Close
 }
 
 func (s *DataSupplier) Time() int64 {
-	return s.Interval(candlestick.Interval1m).Candle().Time
+	return s.Interval(s.store.provider.resolution).Candle().Time
 }
 
 type DataSupplier struct {
