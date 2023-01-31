@@ -1,0 +1,229 @@
+package kiosk
+
+import (
+	"github.com/godoji/algocore/pkg/simulated"
+	"github.com/northberg/candlestick"
+	"log"
+	"sync"
+)
+
+type IntervalSupplier struct {
+	parent   *DataSupplier
+	interval int64
+}
+
+type IndicatorSupplier struct {
+	name      string
+	parent    *DataSupplier
+	indicator *candlestick.Indicator
+}
+
+func (s *DataSupplier) Interval(interval int64) simulated.IntervalSupplier {
+	return IntervalSupplier{
+		parent:   s,
+		interval: interval,
+	}
+}
+
+func (s *DataSupplier) Price() float64 {
+	return s.Interval(candlestick.Interval1m).Candle().Close
+}
+
+func (s *DataSupplier) Time() int64 {
+	return s.Interval(candlestick.Interval1m).Candle().Time
+}
+
+type DataSupplier struct {
+	index int
+	store *DataStore
+}
+
+type DataStore struct {
+	provider      *Provider
+	block         int64
+	candles       map[int64]*candlestick.CandleSet
+	indicatorLock sync.Mutex
+	indicators    map[string]*IndicatorSubStore
+}
+
+type IndicatorSubStore struct {
+	Data map[int]*ParamSubStore
+	Lock sync.Mutex
+}
+
+type ParamSubStore struct {
+	Data []*candlestick.Indicator
+	Lock sync.Mutex
+}
+
+func (s *DataStore) fetchIndicator(name string, interval int64, params []int) *candlestick.Indicator {
+	var err error
+	indicator, err := GetIndicator(s.block, name, interval, s.provider.resolution, s.provider.symbol.ToString(), params)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if indicator == nil {
+		log.Fatalf("indicator \"%s\" does not exist\n", name)
+	}
+	return indicator
+}
+
+func (s *DataStore) Indicator(name string, interval int64, params []int) *candlestick.Indicator {
+
+	// retrieve map of indicators
+	s.indicatorLock.Lock()
+	subStore, ok := s.indicators[name]
+	if !ok {
+		subStore = &IndicatorSubStore{Data: make(map[int]*ParamSubStore)}
+		s.indicators[name] = subStore
+	}
+	s.indicatorLock.Unlock()
+
+	// find bucket based on params
+	var arr *ParamSubStore
+	key := 0
+	if len(params) > 0 {
+		key = params[0]
+	}
+
+	subStore.Lock.Lock()
+	arr, ok = subStore.Data[key]
+	if !ok {
+		arr = &ParamSubStore{Data: make([]*candlestick.Indicator, 0)}
+		subStore.Data[key] = arr
+	}
+	subStore.Lock.Unlock()
+
+	// look in bucket for indicator
+	arr.Lock.Lock()
+	for _, v := range arr.Data {
+		if v.Meta.Name != name {
+			continue
+		}
+		if v.Meta.BaseInterval != interval {
+			continue
+		}
+		if len(v.Meta.Parameters) != len(params) {
+			continue
+		}
+		invalid := false
+		for j, p := range v.Meta.Parameters {
+			if p != params[j] {
+				invalid = true
+				break
+			}
+		}
+		if !invalid {
+			arr.Lock.Unlock()
+			return v
+		}
+	}
+
+	// fetch and add to bucket if not found
+	indicator := s.fetchIndicator(name, interval, params)
+	arr.Data = append(arr.Data, indicator)
+	arr.Lock.Unlock()
+
+	return indicator
+}
+
+func (s *DataStore) CandleSet(interval int64) *candlestick.CandleSet {
+	candles, ok := s.candles[interval]
+	if !ok {
+		var err error
+		candles, err = GetCandles(s.block, interval, s.provider.resolution, s.provider.symbol.ToString())
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if candles == nil {
+			log.Fatalf("failed to fetch %s candles for block %d (%d)\n", s.provider.symbol.ToString(), s.block, interval)
+		}
+		s.candles[interval] = candles
+	}
+	return candles
+}
+
+type Provider struct {
+	symbol     candlestick.AssetIdentifier
+	resolution int64
+}
+
+func NewProvider(symbol candlestick.AssetIdentifier, resolution int64) *Provider {
+	return &Provider{
+		symbol:     symbol,
+		resolution: resolution,
+	}
+}
+
+func (p *Provider) NewDataStore(block int64) *DataStore {
+	return &DataStore{
+		provider:   p,
+		block:      block,
+		candles:    make(map[int64]*candlestick.CandleSet),
+		indicators: make(map[string]*IndicatorSubStore),
+	}
+}
+
+func (p *Provider) Resolution() int64 {
+	return p.resolution
+}
+
+func (p *Provider) Info() *candlestick.AssetInfo {
+	exchangeInfo, err := GetExchangeInfo()
+	if err != nil {
+		log.Println("failed to retrieve exchange info")
+		log.Fatalln(err)
+	}
+	for _, exchange := range exchangeInfo.Exchanges {
+		if exchange.BrokerId != p.symbol.Broker {
+			continue
+		}
+		info, ok := exchange.Symbol(p.symbol.ToString())
+		if !ok {
+			continue
+		}
+		return info
+	}
+	log.Fatalf("could not find broker for asset: %s\n", p.symbol.ToString())
+	return nil
+}
+
+func (s *DataStore) NewDataSupplier(index int) DataSupplier {
+	return DataSupplier{
+		store: s,
+		index: index,
+	}
+}
+
+func (s IntervalSupplier) Candle() *candlestick.Candle {
+	return &s.parent.store.CandleSet(s.interval).Candles[s.parent.index]
+}
+
+func (s IntervalSupplier) Indicator(name string, params ...int) simulated.IndicatorSupplier {
+	return IndicatorSupplier{
+		name:      name,
+		parent:    s.parent,
+		indicator: s.parent.store.Indicator(name, s.interval, params),
+	}
+}
+
+func (s IndicatorSupplier) Exists() bool {
+	for _, series := range s.indicator.Series {
+		if series.Values[s.parent.index].Missing {
+			return false
+		}
+	}
+	return true
+}
+
+func (s IndicatorSupplier) Value() float64 {
+	return s.Series(s.name)
+}
+
+func (s IndicatorSupplier) Series(key string) float64 {
+	v, ok := s.indicator.Series[key]
+	if !ok {
+		log.Fatalf("indicator series \"%s\" does not exist in \"%s\"\n", key, s.name)
+	}
+	return v.Values[s.parent.index].Value
+}
