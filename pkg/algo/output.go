@@ -97,7 +97,7 @@ func (r *ResultEventHandler) SetColor(color string) *ResultEventHandler {
 }
 
 func (r *ResultEventHandler) SetIcon(icon string) *ResultEventHandler {
-	r.event.Color = icon
+	r.event.Icon = icon
 	return r
 }
 
