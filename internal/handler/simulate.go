@@ -173,7 +173,6 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 			// create data supplier for current time instance
 			ds := container.NewDataSupplier(i)
-			ts := (block*candlestick.CandleSetSize + int64(i)) * provider.Resolution()
 
 			// iterate scenarios
 			for j := range scenarios {
@@ -181,7 +180,7 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 				mem := memories[j]
 
 				// create handler for results
-				res := algo.NewResultHandler(resultSet.Scenarios[j], ts)
+				res := algo.NewResultHandler(resultSet.Scenarios[j], ds.Time(), ds.Price())
 
 				// evaluate trading script
 				sim.step(&ds, res, mem, parameters[j])
