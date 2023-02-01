@@ -153,9 +153,6 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 	// TODO: move this to candlestick lib
 	blockTimeSize := provider.Resolution() * candlestick.CandleSetSize
 	startBlock := info.OnBoardDate / blockTimeSize
-	if info.OnBoardDate < 0 {
-		startBlock -= 1
-	}
 	currentBlock := time.Now().UTC().Unix() / blockTimeSize
 	for block := startBlock; block <= currentBlock; block++ {
 
