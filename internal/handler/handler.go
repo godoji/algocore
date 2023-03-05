@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/godoji/algocore/internal/simulation"
 	"github.com/godoji/algocore/pkg/algo"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 
 type BotStatus struct {
 	Running bool
-	Model   *Evaluator
+	Model   *simulation.Evaluator
 }
 
 type EvalConfig struct {
@@ -60,7 +61,7 @@ func handleSimRun(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create bot
-	bot := NewEvaluator(EvalOptions{
+	bot := simulation.NewEvaluator(simulation.EvalOptions{
 		Step:       s.Evaluator,
 		Resolution: params.Resolution,
 		Symbols:    params.Symbols,

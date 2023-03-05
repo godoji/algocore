@@ -1,8 +1,9 @@
-package handler
+package simulation
 
 import (
 	threading "github.com/aelbrecht/go-threader"
 	"github.com/godoji/algocore/pkg/algo"
+	"github.com/godoji/algocore/pkg/env"
 	"github.com/godoji/algocore/pkg/kiosk"
 	"github.com/northberg/candlestick"
 	"runtime"
