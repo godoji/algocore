@@ -1,7 +1,7 @@
 package kiosk
 
 import (
-	"github.com/godoji/algocore/pkg/simulated"
+	"github.com/godoji/algocore/pkg/env"
 	"github.com/northberg/candlestick"
 	"log"
 	"sync"
@@ -18,7 +18,7 @@ type IndicatorSupplier struct {
 	indicator *candlestick.Indicator
 }
 
-func (s *DataSupplier) Interval(interval int64) simulated.IntervalSupplier {
+func (s *DataSupplier) Interval(interval int64) env.IntervalSupplier {
 	return IntervalSupplier{
 		parent:   s,
 		interval: interval,
@@ -26,16 +26,17 @@ func (s *DataSupplier) Interval(interval int64) simulated.IntervalSupplier {
 }
 
 func (s *DataSupplier) Price() float64 {
-	return s.Interval(s.store.provider.resolution).Candle().Close
+	return s.Interval(s.curr.provider.resolution).Candle().Close
 }
 
 func (s *DataSupplier) Time() int64 {
-	return s.Interval(s.store.provider.resolution).Candle().Time
+	return s.Interval(s.curr.provider.resolution).Candle().Time
 }
 
 type DataSupplier struct {
 	index int
-	store *DataStore
+	curr  *DataStore
+	prev  *DataStore
 }
 
 type DataStore struct {
@@ -188,23 +189,40 @@ func (p *Provider) Info() *candlestick.AssetInfo {
 	return nil
 }
 
-func (s *DataStore) NewDataSupplier(index int) DataSupplier {
+func NewSupplier(prev *DataStore, curr *DataStore, index int) DataSupplier {
 	return DataSupplier{
-		store: s,
+		curr:  curr,
+		prev:  prev,
 		index: index,
 	}
 }
 
 func (s IntervalSupplier) Candle() *candlestick.Candle {
-	return &s.parent.store.CandleSet(s.interval).Candles[s.parent.index]
+	return &s.parent.curr.CandleSet(s.interval).Candles[s.parent.index]
 }
 
-func (s IntervalSupplier) Indicator(name string, params ...int) simulated.IndicatorSupplier {
+func (s IntervalSupplier) Indicator(name string, params ...int) env.IndicatorSupplier {
 	return IndicatorSupplier{
 		name:      name,
 		parent:    s.parent,
-		indicator: s.parent.store.Indicator(name, s.interval, params),
+		indicator: s.parent.curr.Indicator(name, s.interval, params),
 	}
+}
+
+func (s IntervalSupplier) FromLast(offset int) *candlestick.Candle {
+	if offset < 0 {
+		log.Fatalln("time offset cannot be negative")
+	}
+	if int64(offset) > candlestick.CandleSetSize {
+		log.Fatalln("cannot retrieve candles more than 1 block back in time")
+	}
+	index := s.parent.index - offset
+	ds := s.parent.curr
+	if index < 0 {
+		index -= int(candlestick.CandleSetSize)
+		ds = s.parent.prev
+	}
+	return &ds.CandleSet(s.interval).Candles[s.parent.index]
 }
 
 func (s IndicatorSupplier) Exists() bool {

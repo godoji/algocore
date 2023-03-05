@@ -4,7 +4,6 @@ import (
 	threading "github.com/aelbrecht/go-threader"
 	"github.com/godoji/algocore/pkg/algo"
 	"github.com/godoji/algocore/pkg/kiosk"
-	"github.com/godoji/algocore/pkg/simulated"
 	"github.com/northberg/candlestick"
 	"runtime"
 	"strings"
@@ -120,15 +119,15 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 	provider := kiosk.NewProvider(s.symbol, sim.resolution)
 
 	// parameters
-	parameters := make([]simulated.Parameters, len(scenarios))
+	parameters := make([]env.Parameters, len(scenarios))
 	for i := range parameters {
-		parameters[i] = simulated.NewParameters(scenarios[i], keys)
+		parameters[i] = env.NewParameters(scenarios[i], keys)
 	}
 
 	// create memory for each scenario
-	memories := make([]*simulated.Memory, len(scenarios))
+	memories := make([]*env.Memory, len(scenarios))
 	for i := range memories {
-		memories[i] = simulated.NewMemory()
+		memories[i] = env.NewMemory()
 	}
 
 	// create place to store all results
@@ -157,19 +156,20 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 	for block := startBlock; block <= currentBlock; block++ {
 
 		// create data store for current block
-		container := provider.NewDataStore(block)
+		prev := provider.NewDataStore(block - 1)
+		curr := provider.NewDataStore(block)
 
 		// iterate 5000 minute candles
 		for i := 0; i < 5000; i++ {
 
 			// check if market is open
-			candle := &container.CandleSet(sim.resolution).Candles[i]
+			candle := &curr.CandleSet(sim.resolution).Candles[i]
 			if candle.Missing {
 				continue
 			}
 
 			// create data supplier for current time instance
-			ds := container.NewDataSupplier(i)
+			ds := kiosk.NewSupplier(prev, curr, i)
 
 			// iterate scenarios
 			for j := range scenarios {

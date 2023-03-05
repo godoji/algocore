@@ -1,4 +1,4 @@
-package simulated
+package env
 
 import "github.com/northberg/candlestick"
 
@@ -10,6 +10,7 @@ type MarketSupplier interface {
 
 type IntervalSupplier interface {
 	Candle() *candlestick.Candle
+	FromLast(offset int) *candlestick.Candle
 	Indicator(name string, params ...int) IndicatorSupplier
 }
 

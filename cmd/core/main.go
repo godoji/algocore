@@ -7,5 +7,5 @@ import (
 
 // Run a server to use this algorithm in headless mode
 func main() {
-	ritmic.Serve(dummy.Evaluate, dummy.Params)
+	ritmic.Serve(dummy.EvaluateLastCandle, dummy.ParamsLastCandle)
 }

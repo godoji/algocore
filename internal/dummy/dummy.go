@@ -2,11 +2,12 @@ package dummy
 
 import (
 	"github.com/godoji/algocore/pkg/algo"
-	"github.com/godoji/algocore/pkg/simulated"
+	"github.com/godoji/algocore/pkg/env"
 	candles "github.com/northberg/candlestick"
 )
 
-var Params = make([]string, 0)
+var ParamsLastCandle = make([]string, 0)
+var ParamsAnyCandles = []string{"historySize"}
 
 type CrossState = int
 
@@ -16,19 +17,18 @@ const (
 	StateDownTrend
 )
 
-type LocalStore struct {
+type LocalStoreLastCandle struct {
 	State CrossState
 }
 
-// Evaluate Example algorithm for determining death-crosses on large time frames
-func Evaluate(chart simulated.MarketSupplier, res *algo.ResultHandler, mem *simulated.Memory, param simulated.Parameters) {
+func EvaluateLastCandle(chart env.MarketSupplier, res *algo.ResultHandler, mem *env.Memory, param env.Parameters) {
 
 	// A way of loading memory from disk
-	var store *LocalStore
+	var store *LocalStoreLastCandle
 	if tmp := mem.Read(); tmp == nil {
-		store = new(LocalStore)
+		store = new(LocalStoreLastCandle)
 	} else {
-		store = tmp.(*LocalStore)
+		store = tmp.(*LocalStoreLastCandle)
 	}
 	defer mem.Store(store)
 
@@ -58,4 +58,50 @@ func Evaluate(chart simulated.MarketSupplier, res *algo.ResultHandler, mem *simu
 
 	// Store next state as current state
 	store.State = nextState
+}
+
+type LocalStoreAnyCandles struct {
+	State       CrossState
+	Initialized bool
+	History     *env.FiLoStack
+}
+
+func EvaluateAnyCandles(chart env.MarketSupplier, res *algo.ResultHandler, mem *env.Memory, param env.Parameters) {
+
+	// A way of loading memory from disk
+	var store *LocalStoreAnyCandles
+	if tmp := mem.Read(); tmp == nil {
+		store = new(LocalStoreAnyCandles)
+	} else {
+		store = tmp.(*LocalStoreAnyCandles)
+	}
+	defer mem.Store(store)
+
+	// Initialize any memory, or append
+	if !store.Initialized {
+		histSize := param.GetInt("historySize")
+		store.History = env.NewFiLoStack(histSize)
+		for i := 0; i < histSize; i++ {
+			store.History.Push(chart.Interval(candles.Interval1d).FromLast(i))
+		}
+		store.Initialized = true
+	} else {
+		store.History.Push(chart.Interval(candles.Interval1d).Candle())
+	}
+
+	// Calculate local maxima
+	maxIndex := 0
+	maxCandle := chart.Interval(candles.Interval1d).Candle()
+	for i := 0; i < store.History.Size(); i++ {
+		c := store.History.At(i).(*candles.Candle)
+		if c.Close > maxCandle.Close {
+			maxIndex = i
+			maxCandle = c
+		}
+	}
+
+	// Create some events
+	if maxIndex == 0 {
+		res.NewEvent("uptrend").SetColor("green").SetIcon("up")
+	}
 }
