@@ -47,7 +47,8 @@ type AnnotationCollection struct {
 }
 
 type ResultEvent struct {
-	Timestamp   int64                 `json:"timestamp"`
+	CreatedOn   int64                 `json:"createdOn"`
+	Time        int64                 `json:"time"`
 	Price       float64               `json:"price"`
 	Label       string                `json:"label"`
 	Icon        string                `json:"icon"`
@@ -99,6 +100,16 @@ func (r *ResultEventHandler) SetIcon(icon string) *ResultEventHandler {
 	return r
 }
 
+func (r *ResultEventHandler) SetPrice(price float64) *ResultEventHandler {
+	r.event.Price = price
+	return r
+}
+
+func (r *ResultEventHandler) SetTime(ts int64) *ResultEventHandler {
+	r.event.Time = ts
+	return r
+}
+
 func NewResultHandler(res *ScenarioResultSet, ts int64, price float64) *ResultHandler {
 	return &ResultHandler{results: res, timestamp: ts, price: price}
 }
@@ -113,7 +124,8 @@ func NewAnnotationCollection() *AnnotationCollection {
 
 func (r *ResultHandler) NewEvent(label string) *ResultEventHandler {
 	e := &ResultEvent{
-		Timestamp:   r.timestamp,
+		CreatedOn:   r.timestamp,
+		Time:        r.timestamp,
 		Price:       r.price,
 		Label:       label,
 		Icon:        "event",
