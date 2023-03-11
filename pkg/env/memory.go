@@ -48,3 +48,7 @@ func (s *FiLoStack) At(index int) interface{} {
 	i := (s.index + index) % s.size
 	return s.stack[i]
 }
+
+func (s *FiLoStack) ToSlice() []interface{} {
+	return s.stack
+}
