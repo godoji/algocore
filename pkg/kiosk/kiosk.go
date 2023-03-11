@@ -219,10 +219,10 @@ func (s IntervalSupplier) FromLast(offset int) *candlestick.Candle {
 	index := s.parent.index - offset
 	ds := s.parent.curr
 	if index < 0 {
-		index -= int(candlestick.CandleSetSize)
+		index += int(candlestick.CandleSetSize)
 		ds = s.parent.prev
 	}
-	return &ds.CandleSet(s.interval).Candles[s.parent.index]
+	return &ds.CandleSet(s.interval).Candles[index]
 }
 
 func (s IndicatorSupplier) Exists() bool {
