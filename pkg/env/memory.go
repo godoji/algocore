@@ -19,9 +19,10 @@ func (m *Memory) Read() interface{} {
 }
 
 type FiLoStack struct {
-	stack []interface{}
-	index int
-	size  int
+	stack   []interface{}
+	index   int
+	size    int
+	counter int
 }
 
 func NewFiLoStack(size int) *FiLoStack {
@@ -36,12 +37,17 @@ func (s *FiLoStack) Size() int {
 	return s.size
 }
 
+func (s *FiLoStack) IsFull() bool {
+	return s.counter >= s.size
+}
+
 func (s *FiLoStack) Push(item interface{}) {
 	s.stack[s.index] = item
 	s.index--
 	if s.index < 0 {
 		s.index += s.size
 	}
+	s.counter++
 }
 
 func (s *FiLoStack) At(index int) interface{} {
