@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+type StepFunction = func(chart env.MarketSupplier, term *algo.ResultHandler, mem *env.Memory, params env.Parameters)
+
 var metricsLock = sync.Mutex{}
 
 type ResultWithLock struct {
@@ -20,7 +22,7 @@ type ResultWithLock struct {
 }
 
 type Evaluator struct {
-	step       algo.StepFunction
+	step       StepFunction
 	symbols    []candlestick.AssetIdentifier
 	resolution int64
 	maxThreads int
@@ -42,7 +44,7 @@ func (s *Evaluator) Results() *algo.ResultSet {
 }
 
 type EvalOptions struct {
-	Step       algo.StepFunction
+	Step       StepFunction
 	Resolution int64
 	Symbols    []string
 }

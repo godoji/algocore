@@ -1,6 +1,7 @@
 package kiosk
 
 import (
+	"github.com/godoji/algocore/pkg/algo"
 	"github.com/godoji/algocore/pkg/env"
 	"github.com/northberg/candlestick"
 	"log"
@@ -10,12 +11,6 @@ import (
 type IntervalSupplier struct {
 	parent   *DataSupplier
 	interval int64
-}
-
-type IndicatorSupplier struct {
-	name      string
-	parent    *DataSupplier
-	indicator *candlestick.Indicator
 }
 
 func (s *DataSupplier) Interval(interval int64) env.IntervalSupplier {
@@ -34,9 +29,11 @@ func (s *DataSupplier) Time() int64 {
 }
 
 type DataSupplier struct {
-	index int
-	curr  *DataStore
-	prev  *DataStore
+	index         int
+	curr          *DataStore
+	prev          *DataStore
+	algorithmLock sync.Mutex
+	algorithms    map[string]*AlgorithmSubStore
 }
 
 type DataStore struct {
@@ -54,6 +51,11 @@ type IndicatorSubStore struct {
 
 type ParamSubStore struct {
 	Data []*candlestick.Indicator
+	Lock sync.Mutex
+}
+
+type AlgorithmSubStore struct {
+	Data []*algo.ScenarioResultSet
 	Lock sync.Mutex
 }
 
@@ -99,10 +101,10 @@ func (s *DataStore) Indicator(name string, interval int64, params []int) *candle
 	arr.Lock.Lock()
 	for _, v := range arr.Data {
 		if v.Meta.Name != name {
-			continue
+			panic("wrong indicator in sub-store")
 		}
 		if v.Meta.BaseInterval != interval {
-			continue
+			panic("wrong interval in sub-store")
 		}
 		if len(v.Meta.Parameters) != len(params) {
 			continue
@@ -126,6 +128,56 @@ func (s *DataStore) Indicator(name string, interval int64, params []int) *candle
 	arr.Lock.Unlock()
 
 	return indicator
+}
+
+func (s *DataSupplier) fetchAlgorithm(name string, params []float64) *algo.ScenarioResultSet {
+	var err error
+	result, err := GetAlgorithm(name, s.curr.provider.resolution, s.curr.provider.symbol.ToString(), params)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if result == nil {
+		log.Fatalf("algorithm \"%s\" does not exist\n", name)
+	}
+	return result
+}
+
+func (s *DataSupplier) algorithm(name string, params []float64) *algo.ScenarioResultSet {
+
+	// retrieve map of indicators
+	s.algorithmLock.Lock()
+	arr, ok := s.algorithms[name]
+	if !ok {
+		arr = &AlgorithmSubStore{Data: make([]*algo.ScenarioResultSet, 0)}
+		s.algorithms[name] = arr
+	}
+	s.algorithmLock.Unlock()
+
+	// look in bucket for indicator
+	arr.Lock.Lock()
+	for _, v := range arr.Data {
+		if len(v.Parameters) != len(params) {
+			continue
+		}
+		invalid := false
+		for j, p := range v.Parameters {
+			if p != params[j] {
+				invalid = true
+				break
+			}
+		}
+		if !invalid {
+			arr.Lock.Unlock()
+			return v
+		}
+	}
+
+	// fetch and add to bucket if not found
+	result := s.fetchAlgorithm(name, params)
+	arr.Data = append(arr.Data, result)
+	arr.Lock.Unlock()
+
+	return result
 }
 
 func (s *DataStore) CandleSet(interval int64) *candlestick.CandleSet {
@@ -191,9 +243,10 @@ func (p *Provider) Info() *candlestick.AssetInfo {
 
 func NewSupplier(prev *DataStore, curr *DataStore, index int) DataSupplier {
 	return DataSupplier{
-		curr:  curr,
-		prev:  prev,
-		index: index,
+		curr:       curr,
+		prev:       prev,
+		index:      index,
+		algorithms: map[string]*AlgorithmSubStore{},
 	}
 }
 
@@ -223,6 +276,41 @@ func (s IntervalSupplier) FromLast(offset int) *candlestick.Candle {
 		ds = s.parent.prev
 	}
 	return &ds.CandleSet(s.interval).Candles[index]
+}
+
+func (s *DataSupplier) Algorithm(name string, params ...float64) env.AlgorithmSupplier {
+	return AlgorithmSupplier{
+		name:     name,
+		parent:   s,
+		scenario: s.algorithm(name, params),
+	}
+}
+
+type AlgorithmSupplier struct {
+	name     string
+	parent   *DataSupplier
+	scenario *algo.ScenarioResultSet
+}
+
+func (s AlgorithmSupplier) HasEvents() bool {
+
+	return false
+}
+
+func (s AlgorithmSupplier) PastEvents() []*algo.ResultEvent {
+
+	return []*algo.ResultEvent{}
+}
+
+func (s AlgorithmSupplier) CurrentEvents() []*algo.ResultEvent {
+
+	return []*algo.ResultEvent{}
+}
+
+type IndicatorSupplier struct {
+	name      string
+	parent    *DataSupplier
+	indicator *candlestick.Indicator
 }
 
 func (s IndicatorSupplier) Exists() bool {

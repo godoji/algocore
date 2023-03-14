@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/godoji/algocore/internal/simulation"
-	"github.com/godoji/algocore/pkg/algo"
 	"github.com/gorilla/mux"
 	"net/http"
 	"sync"
@@ -104,7 +103,7 @@ func handleHeartbeat(w http.ResponseWriter, _ *http.Request) {
 }
 
 type Strategy struct {
-	Evaluator algo.StepFunction
+	Evaluator simulation.StepFunction
 	ParamKeys []string
 }
 

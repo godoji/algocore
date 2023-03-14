@@ -6,9 +6,11 @@ import (
 	"testing"
 )
 
-func TestBot(t *testing.T) {
-	// check if bot actually works before deployment
-	// this makes use of kio and inca, make sure env variables KIO_URL and INCA_URL are set
+func TestBasic(t *testing.T) {
 	ritmic.RunTestShort(dummy.EvaluateLastCandle, [][]float64{{}}, dummy.ParamsLastCandle)
 	ritmic.RunTestShort(dummy.EvaluateAnyCandles, [][]float64{{50}}, dummy.ParamsAnyCandles)
+}
+
+func TestLinked(t *testing.T) {
+	ritmic.RunTestShort(dummy.EvaluateRecursive, [][]float64{{}}, dummy.ParamsRecursive)
 }

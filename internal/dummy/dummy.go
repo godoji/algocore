@@ -1,6 +1,7 @@
 package dummy
 
 import (
+	"fmt"
 	"github.com/godoji/algocore/pkg/algo"
 	"github.com/godoji/algocore/pkg/env"
 	candles "github.com/northberg/candlestick"
@@ -8,6 +9,7 @@ import (
 
 var ParamsLastCandle = make([]string, 0)
 var ParamsAnyCandles = []string{"historySize"}
+var ParamsRecursive = make([]string, 0)
 
 type CrossState = int
 
@@ -104,4 +106,16 @@ func EvaluateAnyCandles(chart env.MarketSupplier, res *algo.ResultHandler, mem *
 	if maxIndex == 0 {
 		res.NewEvent("uptrend").SetColor("green").SetIcon("up")
 	}
+}
+
+func EvaluateRecursive(chart env.MarketSupplier, res *algo.ResultHandler, mem *env.Memory, param env.Parameters) {
+
+	highsAndLows := chart.Algorithm("highs-and-lows")
+
+	if !highsAndLows.HasEvents() {
+		return
+	}
+
+	fmt.Println(len(highsAndLows.CurrentEvents()))
+
 }

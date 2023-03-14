@@ -1,9 +1,11 @@
 package kiosk
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/dgraph-io/ristretto"
+	"github.com/godoji/algocore/pkg/algo"
 	"github.com/northberg/candlestick"
 	"io"
 	"log"
@@ -14,7 +16,7 @@ import (
 	"time"
 )
 
-var kioUrl, incaUrl string
+var kioUrl, incaUrl, algoUrl string
 
 var (
 	cache       *ristretto.Cache
@@ -55,6 +57,11 @@ func init() {
 		incaUrl = v
 	} else {
 		log.Fatalln("INCA_URL not set")
+	}
+	if v := os.Getenv("ALGO_URL"); v != "" {
+		algoUrl = v
+	} else {
+		log.Fatalln("ALGO_URL not set")
 	}
 }
 
@@ -228,6 +235,73 @@ func GetIndicator(block int64, name string, interval int64, resolution int64, sy
 
 }
 
+func GetAlgorithm(name string, resolution int64, symbol string, params []float64) (*algo.ScenarioResultSet, error) {
+
+	// cache
+	cacheParam := ""
+	if cacheLive {
+		cacheParam = "&cache=no-cache"
+	}
+
+	// fetch
+	url := fmt.Sprintf("%s/sync/algorithms/%s?resolution=%d&symbol=%s&params=%s%s",
+		algoUrl, name, resolution, symbol, concatParamsFloat(params), cacheParam)
+
+	// setup request
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		log.Println(url)
+		log.Printf("failed to initialize get request\n")
+		log.Fatalln(err)
+	}
+
+	// set headers
+	req.Header.Set("Accept", "application/octet-stream")
+
+	// execute request and handle any connection or url based error
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println(url)
+		log.Printf("failed to fetch, network error\n")
+		log.Fatalln(err)
+	}
+
+	// case when no candle data exists
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	// check if response is useful
+	if resp.StatusCode != http.StatusOK {
+		log.Println(url)
+		log.Fatalf("indicator request failed with code %d\n", resp.StatusCode)
+	}
+
+	if resp.Body == nil {
+		log.Println(url)
+		log.Fatalf("decoding data failed\n")
+	}
+
+	// read data
+	result := new(algo.ScenarioResultSet)
+	err = gob.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		log.Println(url)
+		log.Fatalf("reading payload failed: %s\n", err.Error())
+	}
+
+	// drain request
+	if _, err = io.Copy(io.Discard, resp.Body); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = resp.Body.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	return result, nil
+}
+
 func GetExchangeInfo() (*candlestick.ExchangeList, error) {
 
 	marketInfoCacheLock.Lock()
@@ -273,6 +347,17 @@ func concatParams(params []int) string {
 			res += ","
 		}
 		res += strconv.Itoa(params[i])
+	}
+	return res
+}
+
+func concatParamsFloat(params []float64) string {
+	res := ""
+	for i := range params {
+		if i != 0 {
+			res += ","
+		}
+		res += strconv.FormatFloat(params[i], 'f', -1, 64)
 	}
 	return res
 }

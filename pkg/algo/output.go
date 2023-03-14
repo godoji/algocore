@@ -1,9 +1,5 @@
 package algo
 
-import "github.com/godoji/algocore/pkg/env"
-
-type StepFunction = func(chart env.MarketSupplier, term *ResultHandler, mem *env.Memory, params env.Parameters)
-
 type ResultSet struct {
 	Symbols map[string]*SymbolResultSet `json:"symbols"`
 }

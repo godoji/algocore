@@ -3,13 +3,13 @@ package ritmic
 import (
 	"fmt"
 	"github.com/godoji/algocore/internal/handler"
-	"github.com/godoji/algocore/pkg/algo"
+	"github.com/godoji/algocore/internal/simulation"
 	"log"
 	"net/http"
 	"os"
 )
 
-func Serve(evaluate algo.StepFunction, params []string) {
+func Serve(evaluate simulation.StepFunction, params []string) {
 
 	strategy := &handler.Strategy{
 		Evaluator: evaluate,
