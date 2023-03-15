@@ -300,30 +300,53 @@ func NewAlgorithmStore(symbol candlestick.AssetIdentifier, resolution int64) *Al
 func (s *DataSupplier) Algorithm(name string, params ...float64) env.AlgorithmSupplier {
 	return AlgorithmSupplier{
 		name:     name,
-		parent:   s.algorithms,
+		parent:   s,
 		scenario: s.algorithms.algorithm(name, params),
 	}
 }
 
 type AlgorithmSupplier struct {
 	name     string
-	parent   *AlgorithmStore
+	parent   *DataSupplier
 	scenario *algo.ScenarioSet
 }
 
 func (s AlgorithmSupplier) HasEvents() bool {
-
+	stepEnd := s.parent.Time()
+	stepStart := stepEnd - s.parent.algorithms.resolution
+	for _, event := range s.scenario.Events {
+		if event.CreatedOn > stepStart && event.CreatedOn <= stepEnd {
+			return true
+		}
+		if event.CreatedOn > stepEnd {
+			return false
+		}
+	}
 	return false
 }
 
 func (s AlgorithmSupplier) PastEvents() []*algo.Event {
-
-	return []*algo.Event{}
+	stepEnd := s.parent.Time()
+	stepStart := stepEnd - s.parent.algorithms.resolution
+	results := make([]*algo.Event, 0)
+	for _, event := range s.scenario.Events {
+		if event.CreatedOn <= stepStart {
+			results = append(results, event)
+		}
+	}
+	return results
 }
 
 func (s AlgorithmSupplier) CurrentEvents() []*algo.Event {
-
-	return []*algo.Event{}
+	stepEnd := s.parent.Time()
+	stepStart := stepEnd - s.parent.algorithms.resolution
+	results := make([]*algo.Event, 0)
+	for _, event := range s.scenario.Events {
+		if event.CreatedOn > stepStart && event.CreatedOn <= stepEnd {
+			results = append(results, event)
+		}
+	}
+	return results
 }
 
 type IndicatorSupplier struct {

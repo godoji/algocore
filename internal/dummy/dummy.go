@@ -1,7 +1,6 @@
 package dummy
 
 import (
-	"fmt"
 	"github.com/godoji/algocore/pkg/algo"
 	"github.com/godoji/algocore/pkg/env"
 	candles "github.com/northberg/candlestick"
@@ -109,13 +108,8 @@ func EvaluateAnyCandles(chart env.MarketSupplier, res *algo.ResultHandler, mem *
 }
 
 func EvaluateRecursive(chart env.MarketSupplier, res *algo.ResultHandler, mem *env.Memory, param env.Parameters) {
-
 	highsAndLows := chart.Algorithm("highs-and-lows", 7)
-
 	if !highsAndLows.HasEvents() {
 		return
 	}
-
-	fmt.Println(len(highsAndLows.CurrentEvents()))
-
 }
