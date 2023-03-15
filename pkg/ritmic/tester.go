@@ -13,7 +13,7 @@ func RunTestShort(step simulation.StepFunction, scenarios [][]float64, paramKeys
 	bot := simulation.NewEvaluator(simulation.EvalOptions{
 		Step:       step,
 		Resolution: candlestick.Interval1d,
-		Symbols:    []string{"UNICORN:US:HPQ", "UNICORN:US:AAPL", "UNICORN:US:COKE:"},
+		Symbols:    []string{"UNICORN:US:COKE:"},
 	})
 	bot.SetMaxThreads(1)
 	bot.Run(scenarios, paramKeys)

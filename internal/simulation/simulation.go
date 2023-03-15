@@ -153,6 +153,7 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 	// iterate block per block, taking advantage of cached requests
 	// TODO: move this to candlestick lib
+	algoSupplier := kiosk.NewAlgorithmStore(s.symbol, sim.resolution)
 	blockTimeSize := provider.Resolution() * candlestick.CandleSetSize
 	startBlock := info.OnBoardDate / blockTimeSize
 	currentBlock := time.Now().UTC().Unix() / blockTimeSize
@@ -172,7 +173,7 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 			}
 
 			// create data supplier for current time instance
-			ds := kiosk.NewSupplier(prev, curr, i)
+			ds := kiosk.NewSupplier(prev, curr, i, algoSupplier)
 
 			// iterate scenarios
 			for j := range scenarios {

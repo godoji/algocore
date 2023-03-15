@@ -29,11 +29,10 @@ func (s *DataSupplier) Time() int64 {
 }
 
 type DataSupplier struct {
-	index         int
-	curr          *DataStore
-	prev          *DataStore
-	algorithmLock sync.Mutex
-	algorithms    map[string]*AlgorithmSubStore
+	index      int
+	curr       *DataStore
+	prev       *DataStore
+	algorithms *AlgorithmStore
 }
 
 type DataStore struct {
@@ -130,9 +129,9 @@ func (s *DataStore) Indicator(name string, interval int64, params []int) *candle
 	return indicator
 }
 
-func (s *DataSupplier) fetchAlgorithm(name string, params []float64) *algo.ScenarioResultSet {
+func (s *AlgorithmStore) fetchAlgorithm(name string, params []float64) *algo.ScenarioResultSet {
 	var err error
-	result, err := GetAlgorithm(name, s.curr.provider.resolution, s.curr.provider.symbol.ToString(), params)
+	result, err := GetAlgorithm(name, s.resolution, s.symbol.ToString(), params)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -142,7 +141,7 @@ func (s *DataSupplier) fetchAlgorithm(name string, params []float64) *algo.Scena
 	return result
 }
 
-func (s *DataSupplier) algorithm(name string, params []float64) *algo.ScenarioResultSet {
+func (s *AlgorithmStore) algorithm(name string, params []float64) *algo.ScenarioResultSet {
 
 	// retrieve map of indicators
 	s.algorithmLock.Lock()
@@ -176,6 +175,11 @@ func (s *DataSupplier) algorithm(name string, params []float64) *algo.ScenarioRe
 	result := s.fetchAlgorithm(name, params)
 	arr.Data = append(arr.Data, result)
 	arr.Lock.Unlock()
+
+	if len(result.Parameters) != len(params) {
+		log.Println("parameter mismatch: parameters must be passed explicitly")
+		log.Fatalf("expected %d parameters but got %d instead", len(params), len(result.Parameters))
+	}
 
 	return result
 }
@@ -241,12 +245,12 @@ func (p *Provider) Info() *candlestick.AssetInfo {
 	return nil
 }
 
-func NewSupplier(prev *DataStore, curr *DataStore, index int) DataSupplier {
+func NewSupplier(prev *DataStore, curr *DataStore, index int, alg *AlgorithmStore) DataSupplier {
 	return DataSupplier{
 		curr:       curr,
 		prev:       prev,
 		index:      index,
-		algorithms: map[string]*AlgorithmSubStore{},
+		algorithms: alg,
 	}
 }
 
@@ -278,17 +282,32 @@ func (s IntervalSupplier) FromLast(offset int) *candlestick.Candle {
 	return &ds.CandleSet(s.interval).Candles[index]
 }
 
+type AlgorithmStore struct {
+	algorithmLock sync.Mutex
+	algorithms    map[string]*AlgorithmSubStore
+	resolution    int64
+	symbol        candlestick.AssetIdentifier
+}
+
+func NewAlgorithmStore(symbol candlestick.AssetIdentifier, resolution int64) *AlgorithmStore {
+	return &AlgorithmStore{
+		algorithms: map[string]*AlgorithmSubStore{},
+		resolution: resolution,
+		symbol:     symbol,
+	}
+}
+
 func (s *DataSupplier) Algorithm(name string, params ...float64) env.AlgorithmSupplier {
 	return AlgorithmSupplier{
 		name:     name,
-		parent:   s,
-		scenario: s.algorithm(name, params),
+		parent:   s.algorithms,
+		scenario: s.algorithms.algorithm(name, params),
 	}
 }
 
 type AlgorithmSupplier struct {
 	name     string
-	parent   *DataSupplier
+	parent   *AlgorithmStore
 	scenario *algo.ScenarioResultSet
 }
 

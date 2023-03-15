@@ -110,7 +110,7 @@ func EvaluateAnyCandles(chart env.MarketSupplier, res *algo.ResultHandler, mem *
 
 func EvaluateRecursive(chart env.MarketSupplier, res *algo.ResultHandler, mem *env.Memory, param env.Parameters) {
 
-	highsAndLows := chart.Algorithm("highs-and-lows")
+	highsAndLows := chart.Algorithm("highs-and-lows", 7)
 
 	if !highsAndLows.HasEvents() {
 		return
