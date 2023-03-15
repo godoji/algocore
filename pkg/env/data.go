@@ -25,7 +25,7 @@ type IndicatorSupplier interface {
 }
 
 type AlgorithmSupplier interface {
-	PastEvents() []*algo.ResultEvent
-	CurrentEvents() []*algo.ResultEvent
+	PastEvents() []*algo.Event
+	CurrentEvents() []*algo.Event
 	HasEvents() bool
 }

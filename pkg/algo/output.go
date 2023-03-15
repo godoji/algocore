@@ -5,12 +5,12 @@ type ResultSet struct {
 }
 
 type SymbolResultSet struct {
-	Scenarios []*ScenarioResultSet `json:"scenarios"`
+	Scenarios []*ScenarioSet `json:"scenarios"`
 }
 
-type ScenarioResultSet struct {
-	Events     []*ResultEvent `json:"events"`
-	Parameters []float64      `json:"parameters"`
+type ScenarioSet struct {
+	Events     []*Event  `json:"events"`
+	Parameters []float64 `json:"parameters"`
 }
 
 type PointAnnotation struct {
@@ -42,7 +42,7 @@ type AnnotationCollection struct {
 	Labels []*LabelAnnotation `json:"labels"`
 }
 
-type ResultEvent struct {
+type Event struct {
 	CreatedOn   int64                 `json:"createdOn"`
 	Time        int64                 `json:"time"`
 	Price       float64               `json:"price"`
@@ -55,14 +55,14 @@ type ResultEvent struct {
 type ResultHandler struct {
 	timestamp int64
 	price     float64
-	results   *ScenarioResultSet
+	results   *ScenarioSet
 }
 
-type ResultEventHandler struct {
-	event *ResultEvent
+type EventHandler struct {
+	event *Event
 }
 
-func (r *ResultEventHandler) AddLine(line *LineAnnotation) *ResultEventHandler {
+func (r EventHandler) AddLine(line *LineAnnotation) EventHandler {
 	if r.event.Annotations == nil {
 		r.event.Annotations = NewAnnotationCollection()
 	}
@@ -70,7 +70,7 @@ func (r *ResultEventHandler) AddLine(line *LineAnnotation) *ResultEventHandler {
 	return r
 }
 
-func (r *ResultEventHandler) AddPoint(point *PointAnnotation) *ResultEventHandler {
+func (r EventHandler) AddPoint(point *PointAnnotation) EventHandler {
 	if r.event.Annotations == nil {
 		r.event.Annotations = NewAnnotationCollection()
 	}
@@ -78,7 +78,7 @@ func (r *ResultEventHandler) AddPoint(point *PointAnnotation) *ResultEventHandle
 	return r
 }
 
-func (r *ResultEventHandler) AddLabel(label *LabelAnnotation) *ResultEventHandler {
+func (r EventHandler) AddLabel(label *LabelAnnotation) EventHandler {
 	if r.event.Annotations == nil {
 		r.event.Annotations = NewAnnotationCollection()
 	}
@@ -86,27 +86,27 @@ func (r *ResultEventHandler) AddLabel(label *LabelAnnotation) *ResultEventHandle
 	return r
 }
 
-func (r *ResultEventHandler) SetColor(color string) *ResultEventHandler {
+func (r EventHandler) SetColor(color string) EventHandler {
 	r.event.Color = color
 	return r
 }
 
-func (r *ResultEventHandler) SetIcon(icon string) *ResultEventHandler {
+func (r EventHandler) SetIcon(icon string) EventHandler {
 	r.event.Icon = icon
 	return r
 }
 
-func (r *ResultEventHandler) SetPrice(price float64) *ResultEventHandler {
+func (r EventHandler) SetPrice(price float64) EventHandler {
 	r.event.Price = price
 	return r
 }
 
-func (r *ResultEventHandler) SetTime(ts int64) *ResultEventHandler {
+func (r EventHandler) SetTime(ts int64) EventHandler {
 	r.event.Time = ts
 	return r
 }
 
-func NewResultHandler(res *ScenarioResultSet, ts int64, price float64) *ResultHandler {
+func NewResultHandler(res *ScenarioSet, ts int64, price float64) *ResultHandler {
 	return &ResultHandler{results: res, timestamp: ts, price: price}
 }
 
@@ -118,8 +118,8 @@ func NewAnnotationCollection() *AnnotationCollection {
 	}
 }
 
-func (r *ResultHandler) NewEvent(label string) *ResultEventHandler {
-	e := &ResultEvent{
+func (r *ResultHandler) NewEvent(label string) EventHandler {
+	e := &Event{
 		CreatedOn:   r.timestamp,
 		Time:        r.timestamp,
 		Price:       r.price,
@@ -129,5 +129,5 @@ func (r *ResultHandler) NewEvent(label string) *ResultEventHandler {
 		Annotations: nil,
 	}
 	r.results.Events = append(r.results.Events, e)
-	return &ResultEventHandler{event: e}
+	return EventHandler{event: e}
 }

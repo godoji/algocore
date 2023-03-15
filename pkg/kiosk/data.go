@@ -235,7 +235,7 @@ func GetIndicator(block int64, name string, interval int64, resolution int64, sy
 
 }
 
-func GetAlgorithm(name string, resolution int64, symbol string, params []float64) (*algo.ScenarioResultSet, error) {
+func GetAlgorithm(name string, resolution int64, symbol string, params []float64) (*algo.ScenarioSet, error) {
 
 	// cache
 	cacheParam := ""
@@ -283,7 +283,7 @@ func GetAlgorithm(name string, resolution int64, symbol string, params []float64
 	}
 
 	// read data
-	result := new(algo.ScenarioResultSet)
+	result := new(algo.ScenarioSet)
 	err = gob.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		log.Println(url)

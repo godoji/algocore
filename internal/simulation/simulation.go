@@ -135,7 +135,7 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 	// create place to store all results
 	resultSet := &algo.SymbolResultSet{
-		Scenarios: make([]*algo.ScenarioResultSet, len(scenarios)),
+		Scenarios: make([]*algo.ScenarioSet, len(scenarios)),
 	}
 	results.Lock.Lock()
 	results.Data.Symbols[s.symbol.ToString()] = resultSet
@@ -143,8 +143,8 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 	// store parameters in result set
 	for i := range resultSet.Scenarios {
-		resultSet.Scenarios[i] = &algo.ScenarioResultSet{
-			Events:     make([]*algo.ResultEvent, 0),
+		resultSet.Scenarios[i] = &algo.ScenarioSet{
+			Events:     make([]*algo.Event, 0),
 			Parameters: scenarios[i],
 		}
 	}

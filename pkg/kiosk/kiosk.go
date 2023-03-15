@@ -54,7 +54,7 @@ type ParamSubStore struct {
 }
 
 type AlgorithmSubStore struct {
-	Data []*algo.ScenarioResultSet
+	Data []*algo.ScenarioSet
 	Lock sync.Mutex
 }
 
@@ -129,7 +129,7 @@ func (s *DataStore) Indicator(name string, interval int64, params []int) *candle
 	return indicator
 }
 
-func (s *AlgorithmStore) fetchAlgorithm(name string, params []float64) *algo.ScenarioResultSet {
+func (s *AlgorithmStore) fetchAlgorithm(name string, params []float64) *algo.ScenarioSet {
 	var err error
 	result, err := GetAlgorithm(name, s.resolution, s.symbol.ToString(), params)
 	if err != nil {
@@ -141,13 +141,13 @@ func (s *AlgorithmStore) fetchAlgorithm(name string, params []float64) *algo.Sce
 	return result
 }
 
-func (s *AlgorithmStore) algorithm(name string, params []float64) *algo.ScenarioResultSet {
+func (s *AlgorithmStore) algorithm(name string, params []float64) *algo.ScenarioSet {
 
 	// retrieve map of indicators
 	s.algorithmLock.Lock()
 	arr, ok := s.algorithms[name]
 	if !ok {
-		arr = &AlgorithmSubStore{Data: make([]*algo.ScenarioResultSet, 0)}
+		arr = &AlgorithmSubStore{Data: make([]*algo.ScenarioSet, 0)}
 		s.algorithms[name] = arr
 	}
 	s.algorithmLock.Unlock()
@@ -308,7 +308,7 @@ func (s *DataSupplier) Algorithm(name string, params ...float64) env.AlgorithmSu
 type AlgorithmSupplier struct {
 	name     string
 	parent   *AlgorithmStore
-	scenario *algo.ScenarioResultSet
+	scenario *algo.ScenarioSet
 }
 
 func (s AlgorithmSupplier) HasEvents() bool {
@@ -316,14 +316,14 @@ func (s AlgorithmSupplier) HasEvents() bool {
 	return false
 }
 
-func (s AlgorithmSupplier) PastEvents() []*algo.ResultEvent {
+func (s AlgorithmSupplier) PastEvents() []*algo.Event {
 
-	return []*algo.ResultEvent{}
+	return []*algo.Event{}
 }
 
-func (s AlgorithmSupplier) CurrentEvents() []*algo.ResultEvent {
+func (s AlgorithmSupplier) CurrentEvents() []*algo.Event {
 
-	return []*algo.ResultEvent{}
+	return []*algo.Event{}
 }
 
 type IndicatorSupplier struct {
