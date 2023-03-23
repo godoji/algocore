@@ -26,7 +26,7 @@ type Evaluator struct {
 	symbols    []candlestick.AssetIdentifier
 	resolution int64
 	maxThreads int
-	metrics    algo.Metrics
+	metrics    algo.Status
 	results    *algo.ResultSet
 }
 
@@ -35,7 +35,7 @@ func (s *Evaluator) SetMaxThreads(threads int) *Evaluator {
 	return s
 }
 
-func (s *Evaluator) Metrics() *algo.Metrics {
+func (s *Evaluator) Metrics() *algo.Status {
 	return &s.metrics
 }
 
@@ -61,7 +61,7 @@ func NewEvaluator(opts EvalOptions) *Evaluator {
 		symbols:    assets,
 		resolution: opts.Resolution,
 		maxThreads: runtime.NumCPU(),
-		metrics:    algo.Metrics{},
+		metrics:    algo.Status{},
 		results:    nil,
 	}
 }
@@ -177,6 +177,7 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 			// iterate scenarios
 			for j := range scenarios {
+
 				// retrieve memory
 				mem := memories[j]
 
@@ -185,13 +186,6 @@ func (s *Task) Simulate(sim *Evaluator, scenarios [][]float64, keys []string, re
 
 				// evaluate trading script
 				sim.step(&ds, res, mem, parameters[j])
-
-				// update progress metric
-				metricsLock.Lock()
-				sim.metrics.CurrentBlock += 1
-				sim.metrics.Progress = int(float64(sim.metrics.CurrentBlock) / float64(sim.metrics.TotalBlocks*len(scenarios)*5000) * 100)
-				metricsLock.Unlock()
-
 			}
 		}
 
