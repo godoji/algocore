@@ -244,8 +244,8 @@ func GetAlgorithm(name string, resolution int64, symbol string, params []float64
 	}
 
 	// fetch
-	url := fmt.Sprintf("%s/sync/algorithms/%s?resolution=%d&symbol=%s&params=%s%s",
-		algoUrl, name, resolution, symbol, concatParamsFloat(params), cacheParam)
+	url := fmt.Sprintf("%s/algorithms/%s/symbols/%s?resolution=%d&params=%s%s",
+		algoUrl, name, symbol, resolution, concatParamsFloat(params), cacheParam)
 
 	// setup request
 	req, err := http.NewRequest(http.MethodGet, url, nil)
