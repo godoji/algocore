@@ -28,4 +28,12 @@ func TestFiLoStack_At(t *testing.T) {
 		fmt.Printf("expected %d but got %d\n", 5, stack.At(2).(int))
 		t.Fail()
 	}
+	if stack.At(3).(int) != 6 {
+		fmt.Printf("expected %d but got %d\n", 6, stack.At(3).(int))
+		t.Fail()
+	}
+	if stack.At(4).(int) != 7 {
+		fmt.Printf("expected %d but got %d\n", 7, stack.At(4).(int))
+		t.Fail()
+	}
 }
