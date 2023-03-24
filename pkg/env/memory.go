@@ -51,7 +51,7 @@ func (s *FiLoStack) Push(item interface{}) {
 }
 
 func (s *FiLoStack) At(index int) interface{} {
-	i := (s.index + index) % s.size
+	i := (s.index - index) % s.size
 	return s.stack[i]
 }
 
