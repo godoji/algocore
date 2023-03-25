@@ -55,11 +55,11 @@ type EventHandler struct {
 	event *Event
 }
 
-func (r EventHandler) AddLine(line *SegmentAnnotation) EventHandler {
+func (r EventHandler) AddSegment(segment *SegmentAnnotation) EventHandler {
 	if r.event.Annotations == nil {
 		r.event.Annotations = NewAnnotationCollection()
 	}
-	r.event.Annotations.Segments = append(r.event.Annotations.Segments, line)
+	r.event.Annotations.Segments = append(r.event.Annotations.Segments, segment)
 	return r
 }
 
