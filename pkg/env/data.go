@@ -15,6 +15,8 @@ type MarketSupplier interface {
 type IntervalSupplier interface {
 	Candle() *candlestick.Candle
 	FromLast(offset int) *candlestick.Candle
+	ToTimeStamp(index int64) int64
+	ToIndex(timeStamp int64) int64
 	Indicator(name string, params ...int) IndicatorSupplier
 }
 

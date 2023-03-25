@@ -258,6 +258,14 @@ func (s IntervalSupplier) Candle() *candlestick.Candle {
 	return &s.parent.curr.CandleSet(s.interval).Candles[s.parent.index]
 }
 
+func (s IntervalSupplier) ToIndex(timeStamp int64) int64 {
+	return s.parent.curr.CandleSet(s.interval).Index(timeStamp)
+}
+
+func (s IntervalSupplier) ToTimeStamp(index int64) int64 {
+	return s.parent.curr.CandleSet(s.interval).TimeStampAtIndex(index)
+}
+
 func (s IntervalSupplier) Indicator(name string, params ...int) env.IndicatorSupplier {
 	return IndicatorSupplier{
 		name:      name,
