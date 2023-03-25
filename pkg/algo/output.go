@@ -14,13 +14,14 @@ type ScenarioSet struct {
 }
 
 type PointAnnotation struct {
+	Text  string  `json:"text"`
 	Time  int64   `json:"time"`
 	Price float64 `json:"price"`
 	Icon  string  `json:"icon"`
 	Color string  `json:"color"`
 }
 
-type LineAnnotation struct {
+type SegmentAnnotation struct {
 	TimeBegin  int64   `json:"timeFrom"`
 	TimeEnd    int64   `json:"timeEnd"`
 	PriceBegin float64 `json:"priceBegin"`
@@ -29,17 +30,9 @@ type LineAnnotation struct {
 	Color      string  `json:"color"`
 }
 
-type LabelAnnotation struct {
-	Text  string  `json:"text"`
-	Time  int64   `json:"time"`
-	Price float64 `json:"price"`
-	Color string  `json:"color"`
-}
-
 type AnnotationCollection struct {
-	Points []*PointAnnotation `json:"points"`
-	Lines  []*LineAnnotation  `json:"lines"`
-	Labels []*LabelAnnotation `json:"labels"`
+	Points   []*PointAnnotation   `json:"points"`
+	Segments []*SegmentAnnotation `json:"segments"`
 }
 
 type Event struct {
@@ -62,11 +55,11 @@ type EventHandler struct {
 	event *Event
 }
 
-func (r EventHandler) AddLine(line *LineAnnotation) EventHandler {
+func (r EventHandler) AddLine(line *SegmentAnnotation) EventHandler {
 	if r.event.Annotations == nil {
 		r.event.Annotations = NewAnnotationCollection()
 	}
-	r.event.Annotations.Lines = append(r.event.Annotations.Lines, line)
+	r.event.Annotations.Segments = append(r.event.Annotations.Segments, line)
 	return r
 }
 
@@ -75,14 +68,6 @@ func (r EventHandler) AddPoint(point *PointAnnotation) EventHandler {
 		r.event.Annotations = NewAnnotationCollection()
 	}
 	r.event.Annotations.Points = append(r.event.Annotations.Points, point)
-	return r
-}
-
-func (r EventHandler) AddLabel(label *LabelAnnotation) EventHandler {
-	if r.event.Annotations == nil {
-		r.event.Annotations = NewAnnotationCollection()
-	}
-	r.event.Annotations.Labels = append(r.event.Annotations.Labels, label)
 	return r
 }
 
@@ -112,9 +97,8 @@ func NewResultHandler(res *ScenarioSet, ts int64, price float64) *ResultHandler 
 
 func NewAnnotationCollection() *AnnotationCollection {
 	return &AnnotationCollection{
-		Points: make([]*PointAnnotation, 0),
-		Lines:  make([]*LineAnnotation, 0),
-		Labels: make([]*LabelAnnotation, 0),
+		Points:   make([]*PointAnnotation, 0),
+		Segments: make([]*SegmentAnnotation, 0),
 	}
 }
 
@@ -125,7 +109,7 @@ func (r *ResultHandler) NewEvent(label string) EventHandler {
 		Price:       r.price,
 		Label:       label,
 		Icon:        "event",
-		Color:       "blue",
+		Color:       "white",
 		Annotations: nil,
 	}
 	r.results.Events = append(r.results.Events, e)
