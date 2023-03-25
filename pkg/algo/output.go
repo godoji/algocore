@@ -71,6 +71,20 @@ func (r EventHandler) AddPoint(point *PointAnnotation) EventHandler {
 	return r
 }
 
+func (r EventHandler) AddEvent(event *Event, label string) EventHandler {
+	if r.event.Annotations == nil {
+		r.event.Annotations = NewAnnotationCollection()
+	}
+	r.event.Annotations.Points = append(r.event.Annotations.Points, &PointAnnotation{
+		Text:  label,
+		Time:  event.Time,
+		Price: event.Price,
+		Icon:  event.Icon,
+		Color: event.Color,
+	})
+	return r
+}
+
 func (r EventHandler) SetColor(color string) EventHandler {
 	r.event.Color = color
 	return r
