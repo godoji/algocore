@@ -259,11 +259,14 @@ func (s IntervalSupplier) Candle() *candlestick.Candle {
 }
 
 func (s IntervalSupplier) ToIndex(timeStamp int64) int64 {
-	return s.parent.curr.CandleSet(s.interval).Index(timeStamp)
+	return -(s.parent.curr.CandleSet(s.interval).Index(timeStamp) - int64(s.parent.index))
 }
 
 func (s IntervalSupplier) ToTimeStamp(index int64) int64 {
-	return s.parent.curr.CandleSet(s.interval).TimeStampAtIndex(index)
+	if index > 0 {
+		log.Fatalln("cannot look into the future")
+	}
+	return s.parent.curr.CandleSet(s.interval).TimeStampAtIndex(-index + int64(s.parent.index))
 }
 
 func (s IntervalSupplier) Indicator(name string, params ...int) env.IndicatorSupplier {
