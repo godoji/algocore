@@ -41,6 +41,14 @@ func (s *FiLoStack) IsFull() bool {
 	return s.counter >= s.size
 }
 
+func (s *FiLoStack) Clear() {
+	for i := range s.stack {
+		s.stack[i] = nil
+	}
+	s.index = 0
+	s.counter = 0
+}
+
 func (s *FiLoStack) Push(item interface{}) {
 	s.stack[s.index] = item
 	s.index--
