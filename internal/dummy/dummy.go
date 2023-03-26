@@ -112,4 +112,7 @@ func EvaluateRecursive(chart env.MarketSupplier, res *algo.ResultHandler, mem *e
 	if !highsAndLows.HasEvents() {
 		return
 	}
+	highsAndLows.PastEvents()
+	highsAndLows.LastEvents()
+	highsAndLows.Events()
 }

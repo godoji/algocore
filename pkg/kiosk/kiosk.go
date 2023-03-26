@@ -336,28 +336,37 @@ func (s AlgorithmSupplier) HasEvents() bool {
 	return false
 }
 
-func (s AlgorithmSupplier) PastEvents() []*algo.Event {
+func (s AlgorithmSupplier) startEndIndex() (int, int) {
 	stepEnd := s.parent.Time()
-	stepStart := stepEnd - s.parent.algorithms.resolution
-	results := make([]*algo.Event, 0)
-	for _, event := range s.scenario.Events {
-		if event.CreatedOn <= stepStart {
-			results = append(results, event)
+	stepBegin := stepEnd - s.parent.algorithms.resolution
+
+	indexEnd := 0
+	indexBegin := -1
+	for i, event := range s.scenario.Events {
+		if event.CreatedOn > stepEnd {
+			break
 		}
+		if indexBegin == -1 && stepBegin < event.CreatedOn {
+			indexBegin = i
+		}
+		indexEnd = i + 1
 	}
-	return results
+	return indexBegin, indexEnd
 }
 
-func (s AlgorithmSupplier) CurrentEvents() []*algo.Event {
-	stepEnd := s.parent.Time()
-	stepStart := stepEnd - s.parent.algorithms.resolution
-	results := make([]*algo.Event, 0)
-	for _, event := range s.scenario.Events {
-		if event.CreatedOn > stepStart && event.CreatedOn <= stepEnd {
-			results = append(results, event)
-		}
-	}
-	return results
+func (s AlgorithmSupplier) Events() []*algo.Event {
+	_, end := s.startEndIndex()
+	return s.scenario.Events[:end]
+}
+
+func (s AlgorithmSupplier) PastEvents() []*algo.Event {
+	begin, _ := s.startEndIndex()
+	return s.scenario.Events[:begin]
+}
+
+func (s AlgorithmSupplier) LastEvents() []*algo.Event {
+	begin, end := s.startEndIndex()
+	return s.scenario.Events[begin:end]
 }
 
 type IndicatorSupplier struct {
