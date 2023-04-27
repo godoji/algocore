@@ -9,6 +9,7 @@ import (
 	"github.com/northberg/candlestick"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -208,6 +209,33 @@ func GetCandles(block int64, interval int64, resolution int64, symbol string) (*
 	}
 	return result, nil
 
+}
+
+func GetAllCandle(interval int64, resolution int64, symbol string) ([]*candlestick.CandleSet, error) {
+	info, err := GetExchangeInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	startBlock := int64(math.MinInt64)
+	for _, exchange := range info.Exchanges {
+		if symInfo, ok := exchange.Symbol(symbol); ok {
+			startBlock = symInfo.OnBoardDate
+		}
+	}
+
+	collection := make([]*candlestick.CandleSet, 0)
+	for i := startBlock; i < time.Now().UTC().Unix(); i += candlestick.CandleSetSize * interval {
+
+		b := candlestick.UnixToBlock(i, interval)
+		candles, err := GetCandles(b, interval, resolution, symbol)
+		if err != nil {
+			return nil, err
+		}
+		collection = append(collection, candles)
+	}
+
+	return collection, nil
 }
 
 func GetIndicator(block int64, name string, interval int64, resolution int64, symbol string, params []int) (*candlestick.Indicator, error) {
