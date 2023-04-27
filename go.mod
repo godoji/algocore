@@ -6,7 +6,7 @@ require (
 	github.com/aelbrecht/go-threader v0.0.3
 	github.com/dgraph-io/ristretto v0.1.1
 	github.com/gorilla/mux v1.8.0
-	github.com/northberg/candlestick v0.2.6
+	github.com/northberg/candlestick v0.4.0
 )
 
 require (

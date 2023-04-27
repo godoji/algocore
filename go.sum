@@ -15,8 +15,8 @@ github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekf
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
-github.com/northberg/candlestick v0.2.6 h1:fFf998e/mXs1M+5eD0cCAzz9GMe2lZwyrIPd43/hH50=
-github.com/northberg/candlestick v0.2.6/go.mod h1:8hO2uho1Ui9PeE0f9XLCl/csnQzH6hCUiOvHo4OrnAE=
+github.com/northberg/candlestick v0.4.0 h1:rQc47oB5ydbUykP5wii8jq5yKJc2CIiNiy0mCjf1Ulg=
+github.com/northberg/candlestick v0.4.0/go.mod h1:FUbxMojTlKtwkm/Ka/Pdkcs7JRes6F4eaOgZGgHlFm8=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
