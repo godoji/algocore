@@ -211,7 +211,7 @@ func GetCandles(block int64, interval int64, resolution int64, symbol string) (*
 
 }
 
-func GetAllCandle(interval int64, resolution int64, symbol string) ([]*candlestick.CandleSet, error) {
+func GetAllCandles(interval int64, resolution int64, symbol string) ([]*candlestick.CandleSet, error) {
 	info, err := GetExchangeInfo()
 	if err != nil {
 		return nil, err
@@ -232,7 +232,9 @@ func GetAllCandle(interval int64, resolution int64, symbol string) ([]*candlesti
 		if err != nil {
 			return nil, err
 		}
-		collection = append(collection, candles)
+		if candles != nil {
+			collection = append(collection, candles)
+		}
 	}
 
 	return collection, nil
