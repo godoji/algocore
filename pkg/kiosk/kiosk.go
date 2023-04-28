@@ -131,7 +131,7 @@ func (s *DataStore) Indicator(name string, interval int64, params []int) *candle
 
 func (s *AlgorithmStore) fetchAlgorithm(name string, params []float64) *algo.ScenarioSet {
 	var err error
-	result, err := GetAlgorithm(name, s.resolution, s.symbol.ToString(), params)
+	result, err := GetAlgorithm(name, s.resolution, s.symbol.ToString(), params, true)
 	if err != nil {
 		log.Fatalln(err)
 	}

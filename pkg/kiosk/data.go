@@ -265,12 +265,12 @@ func GetIndicator(block int64, name string, interval int64, resolution int64, sy
 
 }
 
-func GetAlgorithm(name string, resolution int64, symbol string, params []float64) (*algo.ScenarioSet, error) {
+func GetAlgorithm(name string, resolution int64, symbol string, params []float64, useCache bool) (*algo.ScenarioSet, error) {
 
 	// cache
 	cacheParam := ""
-	if cacheLive {
-		cacheParam = "&cache=no-cache"
+	if cacheLive || !useCache {
+		cacheParam = "&force=true"
 	}
 
 	// fetch
