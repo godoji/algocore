@@ -242,13 +242,11 @@ func GetAllCandles(interval int64, resolution int64, symbol string) ([]*candlest
 
 func GetIndicator(block int64, name string, interval int64, resolution int64, symbol string, params []int) (*candlestick.Indicator, error) {
 
-	// cache
 	cacheParam := ""
 	if cacheLive {
 		cacheParam = "&cache=no-cache"
 	}
 
-	// fetch
 	url := fmt.Sprintf("%s/indicators/t/%s?block=%d&interval=%d&resolution=%d&symbol=%s&params=%s%s",
 		incaUrl, name, block, interval, resolution, symbol, concatParams(params), cacheParam)
 	raw, err := fetch(url, func(b []byte) (interface{}, error) { return candlestick.DecodeIndicatorSet(b) })
